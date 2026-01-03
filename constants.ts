@@ -19,7 +19,7 @@ export const getPitColor = (count: number) => {
 };
 
 // Maps 0-11 index to counter-clockwise board path
-// South A-F: 0,1,2,3,4,5
-// North a-f: 6,7,8,9,10,11
-// Actual Awale path: A->B->C->D->E->F -> f->e->d->c->b->a
-export const BOARD_PATH = [0, 1, 2, 3, 4, 5, 11, 10, 9, 8, 7, 6];
+// South A-F: 0, 1, 2, 3, 4, 5 (Left to Right)
+// North a-f: 6, 7, 8, 9, 10, 11 (Right to Left on screen, but indices 0-5 in North array)
+// Correct CCW Path: 0->1->2->3->4->5 (Sud) then 6->7->8->9->10->11 (Nord)
+export const BOARD_PATH = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];

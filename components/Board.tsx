@@ -8,6 +8,7 @@ interface BoardProps {
   showValues?: boolean;
   highlightedPits?: number[]; // index 0-5 for sud, 6-11 for nord
   onPitClick?: (side: 'SUD' | 'NORD', index: number) => void;
+  level?: 1 | 2;
 }
 
 export const Board: React.FC<BoardProps> = ({ 
@@ -15,7 +16,8 @@ export const Board: React.FC<BoardProps> = ({
   nord, 
   showValues = true, 
   highlightedPits = [], 
-  onPitClick 
+  onPitClick,
+  level = 2
 }) => {
   const renderPit = (side: 'SUD' | 'NORD', index: number, value: number, name: string) => {
     const globalIdx = side === 'SUD' ? index : index + 6;
@@ -43,10 +45,13 @@ export const Board: React.FC<BoardProps> = ({
 
   return (
     <div className="bg-slate-800 p-3 md:p-6 rounded-2xl md:rounded-3xl shadow-2xl border border-slate-700 w-full max-w-2xl mx-auto overflow-hidden">
-      {/* North Row (Top) */}
-      <div className="grid grid-cols-6 gap-2 md:gap-3 mb-4 md:mb-6">
-        {nord.slice().reverse().map((val, i) => renderPit('NORD', 5 - i, val, PIT_NAMES_NORD[5 - i]))}
-      </div>
+      {/* North Row (Top) - Only shown if Level 2 */}
+      {level === 2 && (
+        <div className="grid grid-cols-6 gap-2 md:gap-3 mb-4 md:mb-6 animate-in slide-in-from-top-4 duration-300">
+          {nord.slice().reverse().map((val, i) => renderPit('NORD', 5 - i, val, PIT_NAMES_NORD[5 - i]))}
+        </div>
+      )}
+      
       {/* South Row (Bottom) */}
       <div className="grid grid-cols-6 gap-2 md:gap-3">
         {sud.map((val, i) => renderPit('SUD', i, val, PIT_NAMES_SUD[i]))}
