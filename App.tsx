@@ -4,15 +4,14 @@ import { FlashScan } from './components/FlashScan';
 import { DistributionDrill } from './components/DistributionDrill';
 import { ChecksumChallenge } from './components/ChecksumChallenge';
 import { UserProfile, UserRank, ModuleType } from './types';
-import { getAIRecommendation } from './services/geminiService';
 
 const STORAGE_KEY = 'mental_matrix_profile';
 
 const INITIAL_PROFILE: UserProfile = {
   id: 'user-1',
-  pseudo: 'GrandMaster-X',
+  pseudo: 'Joueur-Alpha',
   rank: UserRank.ADEPTE,
-  xp: 1250,
+  xp: 0,
   stats: {
     sessionsTotal: 0,
     trainingTime: 0,
@@ -22,27 +21,26 @@ const INITIAL_PROFILE: UserProfile = {
     distribution: { attempts: 0, successes: 0 },
     checksum: { attempts: 0, successes: 0 }
   },
-  recommendation: 'Analysez vos statistiques pour recevoir une recommandation personnalisée.'
+  recommendation: ''
 };
 
 const App: React.FC = () => {
   const [activeModule, setActiveModule] = useState<ModuleType>('DASHBOARD');
   const [profile, setProfile] = useState<UserProfile>(INITIAL_PROFILE);
-  const [isUpdatingAI, setIsUpdatingAI] = useState(false);
 
-  // Load profile from localStorage on mount
+  // Charger le profil depuis le stockage local au démarrage
   useEffect(() => {
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved) {
       try {
         setProfile(JSON.parse(saved));
       } catch (e) {
-        console.error("Failed to parse profile", e);
+        console.error("Erreur de chargement du profil", e);
       }
     }
   }, []);
 
-  // Save profile to localStorage whenever it changes
+  // Sauvegarder le profil à chaque modification
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(profile));
   }, [profile]);
@@ -76,46 +74,40 @@ const App: React.FC = () => {
         }
       }
 
-      // Update success rate
+      // Calcul du taux de réussite global
       const totalAttempts = next.stats.flashScan.attempts + next.stats.distribution.attempts + next.stats.checksum.attempts;
       const totalSuccess = next.stats.flashScan.successes + next.stats.distribution.successes + next.stats.checksum.successes;
       next.stats.successRate = totalAttempts > 0 ? Number(((totalSuccess / totalAttempts) * 100).toFixed(1)) : 0;
 
-      // Update Rank based on XP
+      // Mise à jour automatique du rang
       if (next.xp > 5000) next.rank = UserRank.MAITRE;
       else if (next.xp > 2500) next.rank = UserRank.EXPERT;
       else if (next.xp > 1000) next.rank = UserRank.ADEPTE;
       else if (next.xp > 300) next.rank = UserRank.APPRENTI;
+      else next.rank = UserRank.NOVICE;
 
       return next;
     });
   };
 
-  const handleAIAdvice = async () => {
-    setIsUpdatingAI(true);
-    const advice = await getAIRecommendation(profile);
-    setProfile(prev => ({ ...prev, recommendation: advice }));
-    setIsUpdatingAI(false);
-  };
-
   const navItems = [
-    { id: 'DASHBOARD', label: 'Dashboard', icon: '📊' },
+    { id: 'DASHBOARD', label: 'Stats', icon: '📊' },
     { id: 'FLASH_SCAN', label: 'Flash', icon: '📸' },
     { id: 'DISTRIBUTION', label: 'Semis', icon: '🔄' },
     { id: 'CHECKSUM', label: 'Check', icon: '🎯' },
   ];
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 p-4 pb-24 md:p-8 md:pb-8 flex flex-col">
-      {/* Header - Desktop & Tablet */}
-      <header className="max-w-7xl mx-auto w-full flex flex-col md:flex-row justify-between items-center mb-8 md:mb-12 space-y-4 md:space-y-0">
+    <div className="min-h-screen bg-slate-950 text-slate-100 p-4 pb-24 md:p-8 flex flex-col">
+      {/* Header */}
+      <header className="max-w-7xl mx-auto w-full flex flex-col md:flex-row justify-between items-center mb-6 md:mb-12 space-y-4 md:space-y-0">
         <div className="flex items-center space-x-4">
-          <div className="w-12 h-12 md:w-16 md:h-16 bg-blue-600 rounded-2xl flex items-center justify-center text-2xl md:text-3xl shadow-lg shadow-blue-500/20">
+          <div className="w-12 h-12 bg-blue-600 rounded-2xl flex items-center justify-center text-2xl shadow-lg shadow-blue-500/20">
             🧠
           </div>
           <div>
-            <h1 className="text-xl md:text-2xl font-black uppercase tracking-tighter text-white">Mental Matrix</h1>
-            <p className="text-[10px] md:text-xs text-slate-500 font-medium uppercase tracking-widest">Awalé Visualization</p>
+            <h1 className="text-xl font-black uppercase tracking-tighter text-white">Mental Matrix</h1>
+            <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Awalé Visualization</p>
           </div>
         </div>
 
@@ -133,12 +125,12 @@ const App: React.FC = () => {
           ))}
         </nav>
 
-        <div className="flex items-center space-x-3 bg-slate-900 px-4 py-2 md:px-6 md:py-3 rounded-2xl border border-slate-800 shadow-xl">
+        <div className="flex items-center space-x-3 bg-slate-900 px-4 py-2 rounded-2xl border border-slate-800 shadow-xl">
            <div className="text-right">
              <p className="text-[10px] text-slate-500 font-bold uppercase">{profile.rank}</p>
              <p className="text-sm font-bold text-blue-400">{profile.xp} XP</p>
            </div>
-           <div className="w-10 h-10 md:w-12 md:h-12 bg-slate-800 rounded-full border-2 border-blue-500 flex items-center justify-center text-xl overflow-hidden shadow-inner">
+           <div className="w-10 h-10 bg-slate-800 rounded-full border-2 border-blue-500 flex items-center justify-center overflow-hidden">
               <img src={`https://api.dicebear.com/7.x/bottts/svg?seed=${profile.pseudo}`} alt="Avatar" className="w-full h-full object-cover" />
            </div>
         </div>
@@ -147,84 +139,51 @@ const App: React.FC = () => {
       {/* Main Content */}
       <main className="max-w-7xl mx-auto w-full flex-grow">
         {activeModule === 'DASHBOARD' && (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-            <div className="lg:col-span-2 space-y-6 md:space-y-8">
-              <section className="bg-slate-900 p-6 md:p-8 rounded-3xl border border-slate-800 shadow-2xl">
-                <h3 className="text-lg md:text-xl font-bold mb-6 flex items-center space-x-2">
-                  <span>🚀</span> <span>Statistiques de Performance</span>
-                </h3>
-                <div className="grid grid-cols-2 gap-4 md:gap-6">
-                  {[
-                    { label: 'Sessions', value: profile.stats.sessionsTotal, color: 'text-white' },
-                    { label: 'Précision', value: `${profile.stats.successRate}%`, color: 'text-green-400' },
-                    { label: 'Boot Time', value: `${profile.stats.bootTime.toFixed(1)}s`, color: 'text-blue-400' },
-                    { label: 'Niveau', value: profile.rank, color: 'text-purple-400' },
-                  ].map(stat => (
-                    <div key={stat.label} className="bg-slate-950 p-4 md:p-6 rounded-2xl border border-slate-800 shadow-inner">
-                      <p className="text-[10px] text-slate-500 font-bold uppercase mb-1">{stat.label}</p>
-                      <p className={`text-xl md:text-3xl font-black ${stat.color}`}>{stat.value}</p>
-                    </div>
-                  ))}
-                </div>
-              </section>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <section className="bg-slate-900 p-6 md:p-8 rounded-3xl border border-slate-800 shadow-2xl">
+              <h3 className="text-lg font-bold mb-6 flex items-center space-x-2">
+                <span>🚀</span> <span>Performances Globales</span>
+              </h3>
+              <div className="grid grid-cols-2 gap-4">
+                {[
+                  { label: 'Sessions', value: profile.stats.sessionsTotal, color: 'text-white' },
+                  { label: 'Précision', value: `${profile.stats.successRate}%`, color: 'text-green-400' },
+                  { label: 'Boot Time', value: `${profile.stats.bootTime.toFixed(1)}s`, color: 'text-blue-400' },
+                  { label: 'Rang', value: profile.rank, color: 'text-purple-400' },
+                ].map(stat => (
+                  <div key={stat.label} className="bg-slate-950 p-4 rounded-2xl border border-slate-800">
+                    <p className="text-[10px] text-slate-500 font-bold uppercase mb-1">{stat.label}</p>
+                    <p className={`text-xl md:text-2xl font-black ${stat.color}`}>{stat.value}</p>
+                  </div>
+                ))}
+              </div>
+            </section>
 
-              <section className="bg-slate-900 p-6 md:p-8 rounded-3xl border border-slate-800 shadow-2xl">
-                <h3 className="text-lg md:text-xl font-bold mb-6 flex items-center space-x-2">
-                  <span>🔍</span> <span>Détail par Module</span>
-                </h3>
-                <div className="space-y-6">
-                  {[
-                    { label: 'Flash-Scan', current: profile.stats.flashScan.successes, total: profile.stats.flashScan.attempts, color: 'bg-blue-500' },
-                    { label: 'Distribution', current: profile.stats.distribution.successes, total: profile.stats.distribution.attempts, color: 'bg-orange-500' },
-                    { label: 'Checksum', current: profile.stats.checksum.successes, total: profile.stats.checksum.attempts, color: 'bg-purple-500' },
-                  ].map(mod => (
-                    <div key={mod.label} className="space-y-2">
-                      <div className="flex justify-between text-xs font-bold">
-                        <span className="text-slate-400 uppercase tracking-widest">{mod.label}</span>
-                        <span>{mod.current}/{mod.total} ({mod.total > 0 ? ((mod.current/mod.total)*100).toFixed(0) : 0}%)</span>
-                      </div>
-                      <div className="h-3 bg-slate-950 rounded-full overflow-hidden border border-slate-800 p-[1px]">
-                        <div 
-                          className={`h-full ${mod.color} rounded-full transition-all duration-1000 shadow-sm`} 
-                          style={{ width: `${mod.total > 0 ? (mod.current / mod.total) * 100 : 0}%` }}
-                        />
-                      </div>
+            <section className="bg-slate-900 p-6 md:p-8 rounded-3xl border border-slate-800 shadow-2xl">
+              <h3 className="text-lg font-bold mb-6 flex items-center space-x-2">
+                <span>🔍</span> <span>Maîtrise des Modules</span>
+              </h3>
+              <div className="space-y-6">
+                {[
+                  { label: 'Flash-Scan', current: profile.stats.flashScan.successes, total: profile.stats.flashScan.attempts, color: 'bg-blue-500' },
+                  { label: 'Distribution', current: profile.stats.distribution.successes, total: profile.stats.distribution.attempts, color: 'bg-orange-500' },
+                  { label: 'Checksum', current: profile.stats.checksum.successes, total: profile.stats.checksum.attempts, color: 'bg-purple-500' },
+                ].map(mod => (
+                  <div key={mod.label} className="space-y-2">
+                    <div className="flex justify-between text-xs font-bold uppercase tracking-widest text-slate-400">
+                      <span>{mod.label}</span>
+                      <span className="text-white">{mod.current}/{mod.total}</span>
                     </div>
-                  ))}
-                </div>
-              </section>
-            </div>
-
-            <div className="space-y-6 md:space-y-8">
-              <section className="bg-slate-900 p-6 md:p-8 rounded-3xl border border-slate-800 shadow-2xl relative overflow-hidden group">
-                <div className="absolute -top-4 -right-4 p-8 opacity-5 group-hover:opacity-10 transition-opacity">
-                   <svg width="120" height="120" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
-                </div>
-                <h3 className="text-lg md:text-xl font-bold mb-4 flex items-center space-x-2">
-                  <span>✨</span> <span>Conseil du Coach</span>
-                </h3>
-                <div className="bg-slate-950 p-4 md:p-6 rounded-2xl border border-slate-800 mb-6 italic text-slate-400 text-sm md:text-base leading-relaxed">
-                  "{profile.recommendation}"
-                </div>
-                <button 
-                  onClick={handleAIAdvice}
-                  disabled={isUpdatingAI}
-                  className="w-full py-4 bg-blue-600 hover:bg-blue-500 disabled:bg-slate-800 text-white rounded-xl font-bold transition-all shadow-lg shadow-blue-900/40 flex items-center justify-center space-x-2 active:scale-95"
-                >
-                  {isUpdatingAI ? (
-                    <>
-                      <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin" />
-                      <span>Analyse...</span>
-                    </>
-                  ) : (
-                    <>
-                      <span>🔄</span>
-                      <span>Nouvelle recommandation</span>
-                    </>
-                  )}
-                </button>
-              </section>
-            </div>
+                    <div className="h-2 bg-slate-950 rounded-full overflow-hidden border border-slate-800">
+                      <div 
+                        className={`h-full ${mod.color} transition-all duration-1000`} 
+                        style={{ width: `${mod.total > 0 ? (mod.current / mod.total) * 100 : 0}%` }}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </section>
           </div>
         )}
 
@@ -241,8 +200,8 @@ const App: React.FC = () => {
         )}
       </main>
 
-      {/* Mobile Navigation Bar */}
-      <nav className="fixed bottom-0 left-0 w-full bg-slate-900/90 backdrop-blur-xl border-t border-slate-800 flex justify-around items-center p-2 pb-6 md:hidden z-50 shadow-2xl">
+      {/* Mobile Navigation */}
+      <nav className="fixed bottom-0 left-0 w-full bg-slate-900/95 backdrop-blur-xl border-t border-slate-800 flex justify-around items-center p-2 pb-6 md:hidden z-50 shadow-2xl">
         {navItems.map(item => (
           <button
             key={item.id}
@@ -254,10 +213,6 @@ const App: React.FC = () => {
           </button>
         ))}
       </nav>
-
-      <footer className="hidden md:block fixed bottom-0 left-0 w-full p-4 text-center text-slate-600 text-[10px] bg-slate-950/80 backdrop-blur-md">
-        Basé sur les protocoles de "Awalé : Le Calcul Profond - Tome 4" | Données sauvegardées localement.
-      </footer>
     </div>
   );
 };
